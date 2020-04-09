@@ -117,6 +117,9 @@ def statics_flow():
         data_sum = 0
         flow_sum = 0
 
+        data_other = 0
+        other_count = 0
+
         N = 0
         O = 0
         D = 0
@@ -137,6 +140,11 @@ def statics_flow():
                 flow_sum += flow_list[i*60+j]
                 data_count += 1
 
+            if cod_state_list[i*60+j]=='D' or cod_state_list[i*60+j]=='M' or\
+               cod_state_list[i*60+j]=='C' or cod_state_list[i*60+j]=='T':
+                data_other += cod_list[i*60+j]
+                other_count += 1
+
             if(cod_state_list[i*60+j]=='N'):
                 N += 1
             elif(cod_state_list[i*60+j]=='O'):
@@ -150,12 +158,6 @@ def statics_flow():
             elif(cod_state_list[i*60+j]=='T'):
                 T += 1
         #print(i,"N:",N,"O:",O,"D:",D,"M:",M,"C:",C,"T:",T)
-        if(the_formula==1):
-            data = data/data_count
-        else:
-            #print("COD",i+1, data, data/(hour_flow[i]*1000.0/60.0), data/flow_sum)
-            data = data/(hour_flow[i]*1000.0/60.0)
-        hour_cod.append(data)
 
         if(data_state!='F'):
             if(D>0):
@@ -168,13 +170,26 @@ def statics_flow():
                 data_state = 'T'
             elif(O>0):
                 data_state = 'O'
-                data_sum = data*hour_flow[i]*60/data_count
             else:
                 data_state = 'N'
-                data_sum = data*hour_flow[i]*60/data_count
+
+        if(the_formula==1):
+            data = data/data_count
+        elif data_state=='O' or data_state=='N':
+            data = data/(flow_sum)
+        else:
+            data = data_other/other_count
+
+        hour_cod.append(data)
+
+        if (data_state=='O' or data_state=='N') and hour_flow_state[i]=='N':
+            data_sum = data*hour_flow[i]*60/data_count
+        else:
+            data_sum = 0
+            
         hour_cod_state.append(data_state)
         hour_cod_sum.append(data_sum/1000)
-        #print(i,hour_cod_state[i],hour_cod[i],hour_cod_sum[i],data_count)
+        print("COD:",i+1,hour_cod_state[i],hour_cod[i],hour_cod_sum[i],data_count)
 
     #计算andan 小时均值 排放量 数据标记
     for i in range(24):
@@ -183,6 +198,10 @@ def statics_flow():
         data_count = 0
         data_state = 'N'
         data_sum = 0
+        flow_sum = 0
+
+        data_other = 0
+        other_count = 0
 
         N = 0
         O = 0
@@ -201,7 +220,13 @@ def statics_flow():
                 data_count += 1
             elif(flow_state_list[i*60+j]=='N'):
                 data += andan_list[i*60+j]*flow_list[i*60+j]
+                flow_sum += flow_list[i*60+j]
                 data_count += 1
+            
+            if andan_state_list[i*60+j]=='D' or andan_state_list[i*60+j]=='M' or\
+               andan_state_list[i*60+j]=='C' or andan_state_list[i*60+j]=='T':
+                data_other += andan_list[i*60+j]
+                other_count += 1
 
             if(andan_state_list[i*60+j]=='N'):
                 N += 1
@@ -215,14 +240,9 @@ def statics_flow():
                 C += 1
             elif(andan_state_list[i*60+j]=='T'):
                 T += 1
-        if(the_formula==1):
-            data = data/data_count
-        else:
-            data = data/(hour_flow[i]*1000.0/60.0)
-        hour_andan.append(data)
 
         #print(i,"N:",N,"O:",O,"D:",D,"M:",M,"C:",C,"T:",T)
-        if(data_state!='F' and hour_flow_state[i]=='N'):
+        if(data_state!='F'):
             if(D>0):
                 data_state = 'D'
             elif(M>0):
@@ -233,14 +253,27 @@ def statics_flow():
                 data_state = 'T'
             elif(O>0):
                 data_state = 'O'
-                data_sum = data*hour_flow[i]*60/data_count
             else:
                 data_state = 'N'
-                data_sum = data*hour_flow[i]*60/data_count
+
+        if(the_formula==1):
+            data = data/data_count
+        elif data_state=='O' or data_state=='N':
+            data = data/(flow_sum)
+        else:
+            data = data_other/other_count
+
+        hour_andan.append(data)
+
+        if (data_state=='O' or data_state=='N') and hour_flow_state[i]=='N':
+            data_sum = data*hour_flow[i]*60/data_count
+        else:
+            data_sum = 0
+
         hour_andan_state.append(data_state)
         hour_andan_sum.append(data_sum/1000)
         
-        #print("ANDAN:",i+1,hour_andan_state[i],hour_andan[i],hour_andan_sum[i],data_count)
+        print("ANDAN:",i+1,hour_andan_state[i],hour_andan[i],hour_andan_sum[i],data_count)
 
     ##计算ph 小时均值 数据标记
     for i in range(24):
@@ -251,6 +284,7 @@ def statics_flow():
         data = 0
         data_H = 0
         data_HO = 0
+        flow_sum = 0
 
         N = 0
         if(hour_flow[i]==0):
@@ -262,10 +296,14 @@ def statics_flow():
         for j in range(60):
             if(the_formula==1):
                 data_list.append(ph_list[i*60+j])
-            elif(flow_state_list[i*60+j]=='N'):
+            elif flow_state_list[i*60+j]=='N' and \
+                 (ph_state_list[i*60+j]=='N' or ph_state_list[i*60+j]=='O'):
                 data_count += 1
-                data_H += math.pow(10,-ph_list[i*60+j])*flow_list[i*60+j]*60
-                data_HO += math.pow(10,ph_list[i*60+j]-14)*flow_list[i*60+j]*60
+                if ph_list[i*60+j] < 7:
+                    data_H += math.pow(10,-ph_list[i*60+j])*flow_list[i*60+j]
+                else:
+                    data_H -= math.pow(10,ph_list[i*60+j]-14)*flow_list[i*60+j]
+                flow_sum += flow_list[i*60+j]
 
             if(ph_state_list[i*60+j]=='N'):
                 N += 1
@@ -282,15 +320,15 @@ def statics_flow():
             data_list.sort()                
             data = (data_list[29]+data_list[30])/2.0
         else:
-            #data = math.fabs(data_H-data_HO)/hour_flow[i]/1000.0
-            data = data_H/hour_flow[i]/1000.0
-            data = math.log10(data)
-            data = math.fabs(data)
-        
+            data = data_H/flow_sum
+            if data_H>0:
+                data = math.log10(1/data)
+            else:
+                data = 14-math.log10(-1/data)
         hour_ph.append(data)
         hour_ph_state.append(data_state)
         #print(i+1,hour_ph[i],hour_ph_state[i],N)
-        #print('PH:',i+1,hour_ph[i])
+        print('PH:',i+1,hour_ph[i])
         
     return
 
@@ -328,6 +366,7 @@ def statics_day_flow():
     #计算cod 日均值、数据标记和排放量
     data = 0
     flow = 0
+    flow_N = 0
     data_count = 0
     flow_count = 0
     for i in range(24):
@@ -345,6 +384,7 @@ def statics_day_flow():
             data += hour_flow[i]*hour_cod[i]
             flow += hour_flow[i]
             data_count += 1
+        flow_N += hour_flow[i]
         flow_count += 1
     if(data_count/24.0>0.75):
         data_state = 'N'
@@ -352,16 +392,17 @@ def statics_day_flow():
         data_state = 'U'
     data = data/flow
     #print(data,day_flow,data_count)
-    data_sum = data*day_flow[0]*24*24/flow_count/1000.0
+    data_sum = data*flow_N*24/flow_count/1000.0
 
     day_cod.append(data)
     day_cod_state.append(data_state)
     day_cod_sum.append(data_sum)
-    #print("cod_day:",day_cod[0],day_cod_sum[0],day_cod_state[0],flow_count)
+    print("cod_day:",day_cod[0],day_cod_sum[0],day_cod_state[0],flow_count)
 
     #计算andan 日均值、数据标记和排放量
     data = 0
     flow = 0
+    flow_N = 0
     data_count = 0
     flow_count = 0
     for i in range(24):
@@ -380,17 +421,18 @@ def statics_day_flow():
             flow += hour_flow[i]
             data_count += 1
         flow_count += 1
+        flow_N += hour_flow[i]
     if(data_count/24.0>0.75):
         data_state = 'N'
     else:
         data_state = 'U'
     data = data/flow
-    data_sum = data*day_flow[0]*24*24/flow_count/1000.0
+    data_sum = data*flow_N*24/flow_count/1000.0
 
     day_andan.append(data)
     day_andan_state.append(data_state)
     day_andan_sum.append(data_sum)
-    #print("andan_day:",day_andan,day_andan_sum,day_andan_state,flow_count)
+    print("andan_day:",day_andan,day_andan_sum,day_andan_state,flow_count)
 
     #计算ph 日均值和排放量
     the_formula = 0
@@ -432,7 +474,7 @@ def statics_day_flow():
     water_day.append(str(day_andan_state[0]))
     water_day.append(float(day_ph[0]))
     water_day.append(str(day_ph_state[0]))
-    water_day.append(float(day_flow[0]))
+    water_day.append(float(day_flow[0]*24))
     water_day.append(str(day_flow_state[0]))
     water_day.append(float(day_cod_sum[0]))
     water_day.append(float(day_andan_sum[0]))
