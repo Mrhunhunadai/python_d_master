@@ -635,11 +635,11 @@ def statics_hour_state(src_state):
 
         if F >= 45:
             state = 'F'
-        elif D >= 15:
+        elif D > 15:
             state = 'D'
-        elif M >= 15:
+        elif M > 15:
             state = 'M'
-        elif C >= 15:
+        elif C > 15:
             state = 'C'
         elif T >= 45:
             state = 'T'
@@ -648,6 +648,8 @@ def statics_hour_state(src_state):
         elif N >= 45:
             state = 'N'
         else:
+            state = 'N'
+            '''
             if F > 0:
                 state = 'F'
             elif D > 0:
@@ -662,9 +664,10 @@ def statics_hour_state(src_state):
                 state = 'O'
             elif N > 0:
                 state = 'N'
+            '''
 
         hour.append(state)
-        #print(i+1,'return:',hour[i],state,'\t',F,F,D,D,M,M,C,C,T,T,O,O,N,N)
+        print(i+1,'return:',hour[i],state,'\t','F',F,'D',D,'M',M,'C',C,'T',T,'O',O,'N',N)
     return hour
 
 def statics_hour_data(name,src_data,src_state):
@@ -712,6 +715,7 @@ def statics_hour_sum(name, src_data, src_state, flow):
             data = src_data[i]*flow[i]/1000000.0
         else:
             data = 0
+
         sum.append(float(data))
     return sum
 
@@ -813,7 +817,7 @@ data = statics_day_avg(rate_hour, state_hour)
 day_avg.append(float(data))
 day_avg.append('N')
 data = statics_day_avg(a00000_hour, state_hour)
-day_avg.append(float(data))
+day_avg.append(float(data*24))
 data = statics_day_avg(a34013z_sum, state_hour)
 day_avg.append(float(data*24))
 data = statics_day_avg(SO2z_sum, state_hour)
