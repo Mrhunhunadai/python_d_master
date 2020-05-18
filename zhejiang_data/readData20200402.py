@@ -635,11 +635,11 @@ def statics_hour_state(src_state):
 
         if F >= 45:
             state = 'F'
-        elif D > 15:
+        elif D >= 15:
             state = 'D'
-        elif M > 15:
+        elif M >= 15:
             state = 'M'
-        elif C > 15:
+        elif C >= 15:
             state = 'C'
         elif T >= 45:
             state = 'T'
@@ -770,7 +770,8 @@ NOXz_hour = statics_hour_zhesuan("NOXz:",NOX_hour)
 
 a00000_hour = []
 for i in range(24):
-    data = rate_hour[i]*20.0*3600
+    data = rate_hour[i]*20.0*3600*273/(273+temp_hour[i])*(press_hour[i]*1000+101325)/101325*(1-humi_hour[i]/100.0)
+    print("标态干流量[",i,"]:",data)
     a00000_hour.append(float(data))
 
 a34013z_sum = statics_hour_sum("a34013z:",a34013_hour, state_hour, a00000_hour)
@@ -814,11 +815,11 @@ day_avg.append('N')
 data = statics_day_avg(a00000_hour, state_hour)
 day_avg.append(float(data))
 data = statics_day_avg(a34013z_sum, state_hour)
-day_avg.append(float(data))
+day_avg.append(float(data*24))
 data = statics_day_avg(SO2z_sum, state_hour)
-day_avg.append(float(data))
+day_avg.append(float(data*24))
 data = statics_day_avg(NOXz_sum, state_hour)
-day_avg.append(float(data))
+day_avg.append(float(data*24))
 day_avg.append('N')
 
 
