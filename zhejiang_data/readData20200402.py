@@ -631,6 +631,7 @@ def statics_hour_state(src_state):
             elif src_state[i*60+j]=='O':
                 O += 1
             elif src_state[i*60+j]=='N':
+                
                 N += 1
 
         if F >= 45:
@@ -643,13 +644,13 @@ def statics_hour_state(src_state):
             state = 'C'
         elif T >= 45:
             state = 'T'
-        elif O >= 45:
+        elif O >= 30:
             state = 'O'
-        elif N >= 45:
+        elif N >= 30:
             state = 'N'
         else:
             state = 'N'
-            '''
+            
             if F > 0:
                 state = 'F'
             elif D > 0:
@@ -664,7 +665,7 @@ def statics_hour_state(src_state):
                 state = 'O'
             elif N > 0:
                 state = 'N'
-            '''
+            
 
         hour.append(state)
         print(i+1,'return:',hour[i],state,'\t','F',F,'D',D,'M',M,'C',C,'T',T,'O',O,'N',N)
@@ -691,11 +692,11 @@ def statics_hour_data(name,src_data,src_state):
         if data_count>0:
             #print(name,i+1,data/data_count, "=", data ,"/", data_count)
             #print(name,i+1,data/data_count)
-            hour.append(data/data_count)
+            hour.append(float(data/data_count))
         else:
             #print(name,i+1,data, "=", data ,"/", data_count)
             #print(name,i+1,data)
-            hour.append(data)
+            hour.append(float(data))
     return hour
 
 def statics_hour_zhesuan(name, src_data):
@@ -734,7 +735,7 @@ def statics_day_avg(src_data, src_state):
 
 print("##############start read gas source data###############")
 read_gas_data()
-overload_state()
+#overload_state()
 #print_min_data()
 print("##############end read gas source data###############")
 state_hour=statics_hour_state(state_min)
@@ -771,6 +772,26 @@ rate_hour = statics_hour_data("rate_hour:",rate_min,state_min)
 a34013z_hour = statics_hour_zhesuan("a34013z:",a34013_hour)
 SO2z_hour = statics_hour_zhesuan("SO2z:",SO2_hour)
 NOXz_hour = statics_hour_zhesuan("NOXz:",NOX_hour)
+
+def overload_state_hour():
+    for i in range(24):
+        if a34013_state_hour[i]=='N' and (a34013_hour[i]>a34013_max or a34013z_hour[i]>a34013_max):
+            a34013_state_hour[i] = 'O'
+            SO2_state_hour[i] = 'O'
+            NOX_state_hour[i] = 'O'
+            state_hour[i] = 'O'
+        if SO2_state_hour[i]=='N' and (SO2_hour[i]>SO2_max or SO2z_hour[i]>SO2_max):
+            a34013_state_hour[i] = 'O'
+            SO2_state_hour[i] = 'O'
+            NOX_state_hour[i] = 'O'
+            state_hour[i] = 'O'
+        if NOX_state_hour[i]=='N' and (NOX_hour[i]>NOX_max or NOXz_hour[i]>NOX_max):
+            a34013_state_hour[i] = 'O'
+            SO2_state_hour[i] = 'O'
+            NOX_state_hour[i] = 'O'
+            state_hour[i] = 'O'
+    return
+overload_state_hour()
 
 a00000_hour = []
 for i in range(24):
