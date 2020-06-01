@@ -742,9 +742,9 @@ def statics_hour_state(src_state):
             state = 'C'
         elif T >= 45:
             state = 'T'
-        elif O >= 30:
+        elif O >= 45:
             state = 'O'
-        elif N >= 30:
+        elif N >= 45:
             state = 'N'
         else:
             state = 'N'
