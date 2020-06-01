@@ -37,13 +37,14 @@ ph_state_list = []
 flow_list = []
 flow_state_list = []
 
+
+'''
+    读取水类数据
+'''
 def read_water_data():
-    #wb = xlrd.open_workbook('test.xlsx') #open file
-    #sheet = wb.sheet_by_name('water') #table water by read
     wb = xlrd.open_workbook('数据B.xlsx') #open file
     sheet = wb.sheet_by_name('水数据') #table water by read
-#    dat = [] #create null list
-    for a in range(1,sheet.nrows):
+    for a in range(1,sheet.nrows):#从1开始,避开第一行表头
         cells = sheet.row_values(a)
         data = int(cells[0])
         num_list.append(data)
@@ -51,7 +52,7 @@ def read_water_data():
         if type(cells[1]) == float:
             data = float(cells[1])
         else:
-            print(a,type(cells[1]),cells[1])
+            #print(a,type(cells[1]),cells[1])
             data = 0.0
         cod_list.append(data)
 
@@ -61,7 +62,7 @@ def read_water_data():
         if type(cells[3]) == float:
             data = float(cells[3])
         else:
-            print(a,type(cells[3]),cells[3])
+            #print(a,type(cells[3]),cells[3])
             data = 0.0
         andan_list.append(data)
 
@@ -71,7 +72,7 @@ def read_water_data():
         if type(cells[5]) == float:
             data = float(cells[5])
         else:
-            print(a,type(cells[5]),cells[5])
+            #print(a,type(cells[5]),cells[5])
             data = 0.0
         ph_list.append(data)
 
@@ -81,7 +82,7 @@ def read_water_data():
         if type(cells[7]) == float:
             data = float(cells[7])
         else:
-            print(a,type(cells[7]),cells[7])
+            #print(a,type(cells[7]),cells[7])
             data = 0.0
         flow_list.append(data)
 
@@ -94,6 +95,9 @@ def printList():
         print(num_list[i],cod_list[i],cod_state_list[i],andan_list[i],andan_state_list[i],ph_list[i],ph_state_list[i],flow_list[i],flow_state_list[i])
 
 
+'''
+初始化全局 水类小时list
+'''
 hour_flow = []
 hour_flow_state = []
 hour_cod = []
@@ -105,7 +109,9 @@ hour_andan_state = []
 hour_ph = []
 hour_ph_state = []
 
+
 '''
+#屏蔽打印函数
 def printHour(hour_flow,hour_flow_state):
     for i in range(0,24):
         print(i,hour_flow[i],hour_flow_state[i])
@@ -224,7 +230,9 @@ def statics_flow():
             data_sum = data*hour_flow[i]*60/data_count
         else:
             data_sum = 0
-            
+
+        if data>cod_max and data_state=='N':
+            data_state = 'O'
         hour_cod_state.append(data_state)
         hour_cod_sum.append(data_sum/1000)
         print("COD:",i+1,hour_cod_state[i],hour_cod[i],hour_cod_sum[i],data_count)
@@ -308,6 +316,8 @@ def statics_flow():
         else:
             data_sum = 0
 
+        if data>andan_max and data_state=='N':
+            data_state = 'O'
         hour_andan_state.append(data_state)
         hour_andan_sum.append(data_sum/1000)
         
@@ -364,13 +374,17 @@ def statics_flow():
             else:
                 data = 14-math.log10(-1/data)
         hour_ph.append(data)
+        if (data<ph_min or data>ph_max) and data_state=='N':
+            data_state = 'O'
         hour_ph_state.append(data_state)
         #print(i+1,hour_ph[i],hour_ph_state[i],N)
         print('PH:',i+1,hour_ph[i])
         
     return
 
-
+'''
+初始化 全局 水类日数据参数list
+'''
 day_flow = []
 day_flow_state = []
 day_cod = []
