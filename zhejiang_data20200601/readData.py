@@ -4,6 +4,7 @@ import xlrd
 import math
 import xlwt
 import os
+import numpy
 
 '''
 -------------------------
@@ -137,8 +138,8 @@ def statics_flow():
         if(has_N>0):#L/s -> t/h: 累加/60*3600/1000
             data_N_total = data_N_total*60.0/1000.0
             hour_flow.append(data_N_total)
-        elif(has_D==60):
-            data_D_total = data_D_total*60.0/1000.0
+        elif(has_D==60):#整小时都是D的，全部累计，标记为D
+            data_D_total = data_D_total
             hour_flow.append(data_D_total)
         else:
             data_N_total = data_N_total*60.0/1000.0
@@ -164,30 +165,31 @@ def statics_flow():
         data_other = 0
         other_count = 0
 
+        data_D = 0
+
         N = 0
         O = 0
         D = 0
         M = 0
         C = 0
         T = 0
-        if(hour_flow[i]==0):
+        if(hour_flow[i]==0):#该小时流量为0
             the_formula = 1
             data_state = 'F'
-        elif(i==9):
-            the_formula = 1
+
         for j in range(60):
-            if(the_formula==1):
-                data += cod_list[i*60+j]
-                data_count += 1
-            elif(flow_state_list[i*60+j]=='N'):
+            if flow_state_list[i*60+j]=='N' and cod_state_list[i*60+j]!='B':
                 data += cod_list[i*60+j]*flow_list[i*60+j]
                 flow_sum += flow_list[i*60+j]
                 data_count += 1
 
-            if cod_state_list[i*60+j]=='D' or cod_state_list[i*60+j]=='M' or\
-               cod_state_list[i*60+j]=='C' or cod_state_list[i*60+j]=='T':
+            #排除B的数据
+            if cod_state_list[i*60+j]!='B':
                 data_other += cod_list[i*60+j]
                 other_count += 1
+            #计算流量为D的数量
+            if flow_state_list[i*60+j]=='D':
+                data_D += 1
 
             if(cod_state_list[i*60+j]=='N'):
                 N += 1
@@ -201,7 +203,6 @@ def statics_flow():
                 C += 1
             elif(cod_state_list[i*60+j]=='T'):
                 T += 1
-        #print(i,"N:",N,"O:",O,"D:",D,"M:",M,"C:",C,"T:",T)
 
         if(data_state!='F'):
             if(D>0):
@@ -217,16 +218,16 @@ def statics_flow():
             else:
                 data_state = 'N'
 
-        if(the_formula==1):
-            data = data/data_count
-        elif data_state=='O' or data_state=='N':
-            data = data/(flow_sum)
-        else:
+        if the_formula==1 or data_D==60:#流量为0或者流量全为D
             data = data_other/other_count
+            #print("COD:",i+1,"data_sum/avg_count:",data)
+        else:
+            data = data/(flow_sum)
+            #print("COD:",i+1,"data/(flow_sum):",data)
 
         hour_cod.append(data)
 
-        if (data_state=='O' or data_state=='N') and hour_flow_state[i]=='N':
+        if (data_state=='O' or data_state=='N') and data_D!=60:
             data_sum = data*hour_flow[i]*60/data_count
         else:
             data_sum = 0
@@ -235,7 +236,8 @@ def statics_flow():
             data_state = 'O'
         hour_cod_state.append(data_state)
         hour_cod_sum.append(data_sum/1000)
-        print("COD:",i+1,hour_cod_state[i],hour_cod[i],hour_cod_sum[i],data_count)
+        #print("COD:",i+1,hour_cod_state[i],hour_cod[i],hour_cod_sum[i],data_count)
+        #print("")
 
     #计算andan 小时均值 排放量 数据标记
     for i in range(24):
@@ -248,6 +250,7 @@ def statics_flow():
 
         data_other = 0
         other_count = 0
+        data_D = 0
 
         N = 0
         O = 0
@@ -255,24 +258,22 @@ def statics_flow():
         M = 0
         C = 0
         T = 0
-        if(hour_flow[i]==0):
+        if(hour_flow[i]==0):#该小时流量为0
             the_formula = 1
             data_state = 'F'
-        elif(i==9):
-            the_formula = 1
         for j in range(60):
-            if(the_formula==1):
-                data += andan_list[i*60+j]
-                data_count += 1
-            elif(flow_state_list[i*60+j]=='N'):
+            if flow_state_list[i*60+j]=='N' and andan_state_list[i*60+j]!='B':
                 data += andan_list[i*60+j]*flow_list[i*60+j]
                 flow_sum += flow_list[i*60+j]
                 data_count += 1
-            
-            if andan_state_list[i*60+j]=='D' or andan_state_list[i*60+j]=='M' or\
-               andan_state_list[i*60+j]=='C' or andan_state_list[i*60+j]=='T':
+
+            #排除B的数值计算均值
+            if andan_state_list[i*60+j]!='B':
                 data_other += andan_list[i*60+j]
                 other_count += 1
+            #计算流量为D的数量
+            if flow_state_list[i*60+j]=='D':
+                data_D += 1
 
             if(andan_state_list[i*60+j]=='N'):
                 N += 1
@@ -302,16 +303,15 @@ def statics_flow():
             else:
                 data_state = 'N'
 
-        if(the_formula==1):
-            data = data/data_count
-        elif data_state=='O' or data_state=='N':
-            data = data/(flow_sum)
-        else:
+        if the_formula==1 or data_D==60:#流量为0或者流量全为D
             data = data_other/other_count
-
+            #print("ANDAN:",i+1,"data_sum/avg_count:",data)
+        else:
+            data = data/(flow_sum)
+            #print("ANDAN:",i+1,"data/(flow_sum):",data)
         hour_andan.append(data)
 
-        if (data_state=='O' or data_state=='N') and hour_flow_state[i]=='N':
+        if (data_state=='O' or data_state=='N') and data_D!=60:
             data_sum = data*hour_flow[i]*60/data_count
         else:
             data_sum = 0
@@ -321,7 +321,8 @@ def statics_flow():
         hour_andan_state.append(data_state)
         hour_andan_sum.append(data_sum/1000)
         
-        print("ANDAN:",i+1,hour_andan_state[i],hour_andan[i],hour_andan_sum[i],data_count)
+        #print("ANDAN:",i+1,hour_andan_state[i],hour_andan[i],hour_andan_sum[i],data_count)
+        #print("")
 
     ##计算ph 小时均值 数据标记
     for i in range(24):
@@ -333,18 +334,15 @@ def statics_flow():
         data_H = 0
         data_HO = 0
         flow_sum = 0
+        data_D = 0
 
         N = 0
         if(hour_flow[i]==0):
             the_formula = 1
             data_state = 'F'
-        elif(i==9):
-            the_formula = 1
 
         for j in range(60):
-            if(the_formula==1):
-                data_list.append(ph_list[i*60+j])
-            elif flow_state_list[i*60+j]=='N' and \
+            if flow_state_list[i*60+j]=='N' and \
                  (ph_state_list[i*60+j]=='N' or ph_state_list[i*60+j]=='O'):
                 data_count += 1
                 if ph_list[i*60+j] < 7:
@@ -352,6 +350,13 @@ def statics_flow():
                 else:
                     data_H -= math.pow(10,ph_list[i*60+j]-14)*flow_list[i*60+j]
                 flow_sum += flow_list[i*60+j]
+
+            #排除B的数值来计算中位数
+            if ph_state_list[i*60+j]!='B':
+                data_list.append(ph_list[i*60+j])
+            #计算流量D的数量
+            if flow_state_list[i*60+j]=='D':
+                data_D += 1
 
             if(ph_state_list[i*60+j]=='N'):
                 N += 1
@@ -364,9 +369,9 @@ def statics_flow():
             else:
                 data_state='D'
 
-        if(the_formula==1):
+        if the_formula==1 or data_D==60:#流量为0或者流量全为D
             data_list.sort()                
-            data = (data_list[29]+data_list[30])/2.0
+            data = numpy.median(data_list)
         else:
             data = data_H/flow_sum
             if data_H>0:
@@ -378,7 +383,7 @@ def statics_flow():
             data_state = 'O'
         hour_ph_state.append(data_state)
         #print(i+1,hour_ph[i],hour_ph_state[i],N)
-        print('PH:',i+1,hour_ph[i])
+        #print('PH:',i+1,hour_ph[i])
         
     return
 
@@ -449,7 +454,7 @@ def statics_day_flow():
     day_cod.append(data)
     day_cod_state.append(data_state)
     day_cod_sum.append(data_sum)
-    print("cod_day:",day_cod[0],day_cod_sum[0],day_cod_state[0],flow_count)
+    #print("cod_day:",day_cod[0],day_cod_sum[0],day_cod_state[0],flow_count)
 
     #计算andan 日均值、数据标记和排放量
     data = 0
@@ -484,7 +489,7 @@ def statics_day_flow():
     day_andan.append(data)
     day_andan_state.append(data_state)
     day_andan_sum.append(data_sum)
-    print("andan_day:",day_andan,day_andan_sum,day_andan_state,flow_count)
+    #print("andan_day:",day_andan,day_andan_sum,day_andan_state,flow_count)
 
     #计算ph 日均值和排放量
     the_formula = 0
@@ -729,44 +734,56 @@ def statics_hour_state(src_state):
             elif src_state[i*60+j]=='O':
                 O += 1
             elif src_state[i*60+j]=='N':
-                
                 N += 1
 
         if F >= 45:
             state = 'F'
+            print(F)
         elif D > 15:
             state = 'D'
+            print(D)
         elif M > 15:
             state = 'M'
+            print(M)
         elif C > 15:
             state = 'C'
+            print(C)
         elif T >= 45:
             state = 'T'
+            print(T)
         elif O >= 45:
             state = 'O'
+            print(O)
         elif N >= 45:
             state = 'N'
-        else:
-            state = 'N'
-            
-            if F > 0:
-                state = 'F'
-            elif D > 0:
+            print(N)
+        elif (D+M+C+B) > 15:
+            if D > 0:
                 state = 'D'
             elif M > 0:
                 state = 'M'
             elif C > 0:
                 state = 'C'
+            elif B > 0:
+                state = 'B'
+            print(i+1,'return:',state,'\t',',D:',D,',M:',M,',C:',C,',B:',B)
+        elif (F+T+O+N) >= 45:
+            if F > 0:
+                state = 'F'
             elif T > 0:
                 state = 'T'
             elif O > 0:
                 state = 'O'
             elif N > 0:
                 state = 'N'
-            
+            print(i+1,'return:',state,'\t',',F:',F,',T:',T,',O:',O,',N:',N)
+        else:
+            state = 'N'
+            print(i+1,'return:',state,'\t',',F:',F,',D:',D,',M:',M,',C:',C,',T:',T,',O:',O,',N:',N)
 
         hour.append(state)
-        print(i+1,'return:',hour[i],state,'\t','F',F,'D',D,'M',M,'C',C,'T',T,'O',O,'N',N)
+        print(i+1,'return:',hour[i],state)
+        print()
     return hour
 
 def statics_hour_data(name,src_data,src_state):
@@ -783,8 +800,8 @@ def statics_hour_data(name,src_data,src_state):
         data = 0
 
         for j in range(60):
-            if src_state[i*60+j]=='F' or src_state[i*60+j]=='B' or \
-               src_state[i*60+j]=='O' or src_state[i*60+j]=='N' or src_state[i*60+j]=='T':
+            if src_state[i*60+j]=='F' or src_state[i*60+j]=='O' or \
+               src_state[i*60+j]=='N' or src_state[i*60+j]=='T':
                 data += src_data[i*60+j]
                 data_count += 1
         if data_count>0:
@@ -809,8 +826,8 @@ def statics_hour_zhesuan(name, src_data):
 def statics_hour_sum(name, src_data, src_state, flow):
     sum = []
     for i in range(24):
-        if src_state[i]=='F' or src_state[i]=='B' or \
-               src_state[i]=='O' or src_state[i]=='N' or src_state[i]=='T':
+        if src_state[i]=='F' or src_state[i]=='O' or \
+               src_state[i]=='N' or src_state[i]=='T':
             data = src_data[i]*flow[i]/1000000.0
         else:
             data = 0
@@ -822,8 +839,8 @@ def statics_day_avg(src_data, src_state):
     data = 0
     count = 0
     for i in range(24):
-        if src_state[i]=='F' or src_state[i]=='B' or \
-               src_state[i]=='O' or src_state[i]=='N' or src_state[i]=='T':
+        if src_state[i]=='F' or src_state[i]=='O' or \
+                src_state[i]=='N' or src_state[i]=='T':
             data += src_data[i]
             count += 1
     if count > 0:
@@ -837,12 +854,20 @@ read_gas_data()
 #print_min_data()
 print("##############end read gas source data###############")
 state_hour=statics_hour_state(state_min)
+
+print()
 print("a34013_state_hour")
 a34013_state_hour=statics_hour_state(a34013_min_state)
+
+print()
 print("SO2_state_hour")
 SO2_state_hour=statics_hour_state(SO2_min_state)
+
+print()
 print("NOX_state_hour")
 NOX_state_hour=statics_hour_state(NOX_min_state)
+
+
 #a34013_hour = []
 a34013_hour = statics_hour_data("a34013_hour",a34013_min,a34013_min_state)
 print()
@@ -894,7 +919,7 @@ overload_state_hour()
 a00000_hour = []
 for i in range(24):
     data = rate_hour[i]*20.0*3600*273/(273+temp_hour[i])*(press_hour[i]*1000+101325)/101325*(1-humi_hour[i]/100.0)
-    print("标态干流量[",i,"]:",data)
+    #print("标态干流量[",i,"]:",data)
     a00000_hour.append(float(data))
 
 a34013z_sum = statics_hour_sum("a34013z:",a34013_hour, state_hour, a00000_hour)
